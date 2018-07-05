@@ -4,7 +4,7 @@
   "description": "Ashley is a dependency injection container for JavaScript.",
   "main": "index.js",
   "scripts": {
-    "babel": "babel ./src --experimental --source-maps-inline -d ./dist",
+    "babel": "./node_modules/.bin/babel ./src --experimental --source-maps-inline -d ./dist",
     "test": "cross-env NODE_ENV=test mocha",
     "pretest": "npm run lint",
     "lint": "eslint .",

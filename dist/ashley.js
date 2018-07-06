@@ -2,6 +2,8 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var debug = require('debug')('Ashley::Container');
@@ -23,14 +25,50 @@ var Ashley = function () {
 
   _createClass(Ashley, [{
     key: 'shutdown',
-    value: async function shutdown() {
-      for (var i = this._scopesToDeinitialize.length - 1; i >= 0; i--) {
-        var scope = this._scopesToDeinitialize[i];
-        if (scope.deinitialize) {
-          await scope.deinitialize();
-        }
+    value: function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+        var i, scope;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                i = this._scopesToDeinitialize.length - 1;
+
+              case 1:
+                if (!(i >= 0)) {
+                  _context.next = 9;
+                  break;
+                }
+
+                scope = this._scopesToDeinitialize[i];
+
+                if (!scope.deinitialize) {
+                  _context.next = 6;
+                  break;
+                }
+
+                _context.next = 6;
+                return scope.deinitialize();
+
+              case 6:
+                i--;
+                _context.next = 1;
+                break;
+
+              case 9:
+              case 'end':
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function shutdown() {
+        return _ref.apply(this, arguments);
       }
-    }
+
+      return shutdown;
+    }()
   }, {
     key: 'createChild',
     value: function createChild() {
@@ -48,9 +86,28 @@ var Ashley = function () {
 
       var bind = this._bind(name, this._bindFactory.create('Instance', this, name, scope, provider));
 
-      this.factory(name, async function instanceFactory() {
-        return provider.create();
-      });
+      this.factory(name, function () {
+        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  return _context2.abrupt('return', provider.create());
+
+                case 1:
+                case 'end':
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function instanceFactory() {
+          return _ref2.apply(this, arguments);
+        }
+
+        return instanceFactory;
+      }());
 
       if (_.get(options, 'deinitialize')) {
         this._scopesToDeinitialize.push(scope);
@@ -117,49 +174,130 @@ var Ashley = function () {
     }
   }, {
     key: 'resolve',
-    value: async function resolve(name) {
-      debug('Resolving "' + name + '".');
+    value: function () {
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(name) {
+        var bind;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                debug('Resolving "' + name + '".');
 
-      var bind = this.findBind(name);
+                bind = this.findBind(name);
 
-      if (bind) {
-        return bind.get();
+                if (!bind) {
+                  _context3.next = 4;
+                  break;
+                }
+
+                return _context3.abrupt('return', bind.get());
+
+              case 4:
+                throw new errors.Error('Unable to resolve unbound target "' + name + '".');
+
+              case 5:
+              case 'end':
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function resolve(_x) {
+        return _ref3.apply(this, arguments);
       }
 
-      throw new errors.Error('Unable to resolve unbound target "' + name + '".');
-    }
+      return resolve;
+    }()
   }, {
     key: 'resolveAll',
-    value: async function resolveAll(names) {
-      var results = [];
+    value: function () {
+      var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(names) {
+        var results, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name;
 
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                results = [];
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context4.prev = 4;
+                _iterator = (names || [])[Symbol.iterator]();
 
-      try {
-        for (var _iterator = (names || [])[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var name = _step.value;
+              case 6:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context4.next = 16;
+                  break;
+                }
 
-          results.push((await this.resolve(name)));
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+                name = _step.value;
+                _context4.t0 = results;
+                _context4.next = 11;
+                return this.resolve(name);
+
+              case 11:
+                _context4.t1 = _context4.sent;
+
+                _context4.t0.push.call(_context4.t0, _context4.t1);
+
+              case 13:
+                _iteratorNormalCompletion = true;
+                _context4.next = 6;
+                break;
+
+              case 16:
+                _context4.next = 22;
+                break;
+
+              case 18:
+                _context4.prev = 18;
+                _context4.t2 = _context4['catch'](4);
+                _didIteratorError = true;
+                _iteratorError = _context4.t2;
+
+              case 22:
+                _context4.prev = 22;
+                _context4.prev = 23;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 25:
+                _context4.prev = 25;
+
+                if (!_didIteratorError) {
+                  _context4.next = 28;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 28:
+                return _context4.finish(25);
+
+              case 29:
+                return _context4.finish(22);
+
+              case 30:
+                return _context4.abrupt('return', results);
+
+              case 31:
+              case 'end':
+                return _context4.stop();
+            }
           }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        }, _callee4, this, [[4, 18, 22, 30], [23,, 25, 29]]);
+      }));
+
+      function resolveAll(_x2) {
+        return _ref4.apply(this, arguments);
       }
 
-      return results;
-    }
+      return resolveAll;
+    }()
   }, {
     key: 'validate',
     value: function validate() {

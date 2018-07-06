@@ -1,10 +1,14 @@
 'use strict';
 
-const _ = require('lodash');
-const path = require('path');
-const debug = require('debug')('Ashley::TargetResolver');
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-const errors = require('./errors');
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _ = require('lodash');
+var path = require('path');
+var debug = require('debug')('Ashley::TargetResolver');
+
+var errors = require('./errors');
 
 /*
  * Ashley allows to specify the target of a binding in two ways.
@@ -19,59 +23,71 @@ const errors = require('./errors');
  * object.
  *
  */
-class TargetResolver {
-  constructor(options) {
+
+var TargetResolver = function () {
+  function TargetResolver(options) {
+    _classCallCheck(this, TargetResolver);
+
     this.options = options || {};
     this.cache = {};
   }
 
-  resolve(target) {
-    if (_.isObject(target)) {
-      debug(`Resolved "${_.get(target, 'name', target)}" to a reference.`);
-      return target;
+  _createClass(TargetResolver, [{
+    key: 'resolve',
+    value: function resolve(target) {
+      if (_.isObject(target)) {
+        debug('Resolved "' + _.get(target, 'name', target) + '" to a reference.');
+        return target;
+      }
+
+      debug('Resolving "' + target + '".');
+
+      if (!_.isString(target)) {
+        throw new errors.Error('Invalid argument given as target: "' + target + '".');
+      }
+
+      if (path.isAbsolute(target)) {
+        return this._resolveAbsolute(target);
+      }
+
+      return this._resolveRelative(target);
     }
-
-    debug(`Resolving "${target}".`);
-
-    if (!_.isString(target)) {
-      throw new errors.Error(`Invalid argument given as target: "${target}".`);
+  }, {
+    key: '_resolveAbsolute',
+    value: function _resolveAbsolute(target) {
+      debug('Resolving "' + target + '" as an absolute path.');
+      return this._loadTarget(target);
     }
+  }, {
+    key: '_resolveRelative',
+    value: function _resolveRelative(target) {
+      debug('Resolving "' + target + '" as a relative path.');
 
-    if (path.isAbsolute(target)) {
-      return this._resolveAbsolute(target);
+      var root = this.options.root;
+
+      if (!root) {
+        throw new errors.Error('A relative path "' + target + '" given but the root option is not specified.');
+      }
+
+      var filepath = path.resolve(root, target);
+      debug('Resolved the relative path to "' + filepath + '".');
+
+      return this._loadTarget(filepath);
     }
-
-    return this._resolveRelative(target);
-  }
-
-  _resolveAbsolute(target) {
-    debug(`Resolving "${target}" as an absolute path.`);
-    return this._loadTarget(target);
-  }
-
-  _resolveRelative(target) {
-    debug(`Resolving "${target}" as a relative path.`);
-
-    const { root } = this.options;
-    if (!root) {
-      throw new errors.Error(`A relative path "${target}" given but the root option is not specified.`);
+  }, {
+    key: '_loadTarget',
+    value: function _loadTarget(filepath) {
+      try {
+        var obj = require('' + filepath);
+        debug('Succesfully loaded "' + filepath + '".');
+        return obj;
+      } catch (e) {
+        throw new errors.Error('Unable to load "' + filepath + '": ' + e.stack);
+      }
     }
+  }]);
 
-    const filepath = path.resolve(root, target);
-    debug(`Resolved the relative path to "${filepath}".`);
-
-    return this._loadTarget(filepath);
-  }
-
-  _loadTarget(filepath) {
-    try {
-      const obj = require(`${filepath}`);
-      debug(`Succesfully loaded "${filepath}".`);
-      return obj;
-    } catch (e) {
-      throw new errors.Error(`Unable to load "${filepath}": ${e.stack}`);
-    }
-  }
-}
+  return TargetResolver;
+}();
 
 module.exports = TargetResolver;

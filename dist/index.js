@@ -1,33 +1,33 @@
 'use strict';
 
-var Ashley = require('./ashley');
+const Ashley = require('./ashley');
 
-var TargetResolver = require('./target_resolver');
-var CachingTargetResolver = require('./caching_target_resolver');
+const TargetResolver = require('./target_resolver');
+const CachingTargetResolver = require('./caching_target_resolver');
 
-var InstanceProvider = require('./providers/instance_provider');
-var ObjectProvider = require('./providers/object_provider');
-var FactoryProvider = require('./providers/factory_provider');
-var FunctionProvider = require('./providers/function_provider');
+const InstanceProvider = require('./providers/instance_provider');
+const ObjectProvider = require('./providers/object_provider');
+const FactoryProvider = require('./providers/factory_provider');
+const FunctionProvider = require('./providers/function_provider');
 
-var SingletonScope = require('./scopes/singleton_scope');
-var PrototypeScope = require('./scopes/prototype_scope');
-var CloneScope = require('./scopes/clone_scope');
+const SingletonScope = require('./scopes/singleton_scope');
+const PrototypeScope = require('./scopes/prototype_scope');
+const CloneScope = require('./scopes/clone_scope');
 
-var BindFactory = require('./bind_factory');
-var BindValidator = require('./bind_validator');
-var CompleteBind = require('./binds/complete_bind');
-var FactoryBind = require('./binds/factory_bind');
-var ClassBind = require('./binds/class_bind');
-var ObjectBind = require('./binds/object_bind');
+const BindFactory = require('./bind_factory');
+const BindValidator = require('./bind_validator');
+const CompleteBind = require('./binds/complete_bind');
+const FactoryBind = require('./binds/factory_bind');
+const ClassBind = require('./binds/class_bind');
+const ObjectBind = require('./binds/object_bind');
 
-var utils = require('./utils');
+const utils = require('./utils');
 
 module.exports = function (options) {
-  var opts = options || {};
-  var targetResolver = new CachingTargetResolver(new TargetResolver(opts));
+  const opts = options || {};
+  const targetResolver = new CachingTargetResolver(new TargetResolver(opts));
 
-  var bindFactory = new BindFactory({
+  const bindFactory = new BindFactory({
     Instance: CompleteBind,
     Link: CompleteBind,
     Function: CompleteBind,
@@ -37,7 +37,7 @@ module.exports = function (options) {
     Scope: ClassBind
   }, BindValidator);
 
-  var ashley = new Ashley(targetResolver, bindFactory, opts);
+  const ashley = new Ashley(targetResolver, bindFactory, opts);
 
   ashley.scope('Singleton', SingletonScope);
   ashley.scope('Prototype', PrototypeScope);

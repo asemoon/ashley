@@ -1,21 +1,13 @@
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+const _ = require('lodash');
 
-var _ = require('lodash');
+const errors = require('../errors');
 
-var errors = require('../errors');
-
-var InstanceProvider = function () {
-  function InstanceProvider(bindName, container, target, dependencies, options) {
-    _classCallCheck(this, InstanceProvider);
-
+class InstanceProvider {
+  constructor(bindName, container, target, dependencies, options) {
     this.bindName = bindName;
     this.container = container;
     this.target = target;
@@ -26,138 +18,61 @@ var InstanceProvider = function () {
     });
   }
 
-  _createClass(InstanceProvider, [{
-    key: 'create',
-    value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var dependencies, instance;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _context.next = 2;
-                return this.container.resolveAll(this.dependencies);
+  create() {
+    var _this = this;
 
-              case 2:
-                dependencies = _context.sent;
-                instance = new (Function.prototype.bind.apply(this.target, [null].concat(_toConsumableArray(dependencies))))();
+    return _asyncToGenerator(function* () {
+      const dependencies = yield _this.container.resolveAll(_this.dependencies);
+      const instance = new _this.target(...dependencies);
 
-                if (!this.options.initialize) {
-                  _context.next = 7;
-                  break;
-                }
-
-                _context.next = 7;
-                return this._initializeInstance(instance);
-
-              case 7:
-                return _context.abrupt('return', instance);
-
-              case 8:
-              case 'end':
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function create() {
-        return _ref.apply(this, arguments);
+      if (_this.options.initialize) {
+        yield _this._initializeInstance(instance);
       }
 
-      return create;
-    }()
-  }, {
-    key: 'deinitializeInstance',
-    value: function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(instance) {
-        var deinitialize, methodName;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (instance) {
-                  _context2.next = 2;
-                  break;
-                }
+      return instance;
+    })();
+  }
 
-                return _context2.abrupt('return');
+  deinitializeInstance(instance) {
+    var _this2 = this;
 
-              case 2:
-                deinitialize = this.options.deinitialize;
-                methodName = this._lifeCycleMethodName(deinitialize, 'deinitialize');
-
-                if (!instance[methodName]) {
-                  _context2.next = 6;
-                  break;
-                }
-
-                return _context2.abrupt('return', instance[methodName].call(instance));
-
-              case 6:
-                throw new errors.Error('Unable to find a method called "' + methodName + '" on an instance of "' + this.bindName + '".');
-
-              case 7:
-              case 'end':
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function deinitializeInstance(_x) {
-        return _ref2.apply(this, arguments);
+    return _asyncToGenerator(function* () {
+      if (!instance) {
+        return;
       }
 
-      return deinitializeInstance;
-    }()
-  }, {
-    key: '_initializeInstance',
-    value: function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(instance) {
-        var initialize, methodName;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                initialize = this.options.initialize;
-                methodName = this._lifeCycleMethodName(initialize, 'initialize');
+      const { deinitialize } = _this2.options;
+      const methodName = _this2._lifeCycleMethodName(deinitialize, 'deinitialize');
 
-                if (!instance[methodName]) {
-                  _context3.next = 4;
-                  break;
-                }
-
-                return _context3.abrupt('return', instance[methodName].call(instance));
-
-              case 4:
-                throw new errors.Error('Unable to find a method called "' + methodName + '" on an instance of "' + this.bindName + '".');
-
-              case 5:
-              case 'end':
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function _initializeInstance(_x2) {
-        return _ref3.apply(this, arguments);
+      if (instance[methodName]) {
+        return instance[methodName].call(instance);
       }
 
-      return _initializeInstance;
-    }()
-  }, {
-    key: '_lifeCycleMethodName',
-    value: function _lifeCycleMethodName(value, defaultValue) {
-      if (value === true) {
-        return defaultValue;
+      throw new errors.Error(`Unable to find a method called "${methodName}" on an instance of "${_this2.bindName}".`);
+    })();
+  }
+
+  _initializeInstance(instance) {
+    var _this3 = this;
+
+    return _asyncToGenerator(function* () {
+      const { initialize } = _this3.options;
+      const methodName = _this3._lifeCycleMethodName(initialize, 'initialize');
+
+      if (instance[methodName]) {
+        return instance[methodName].call(instance);
       }
-      return value;
+
+      throw new errors.Error(`Unable to find a method called "${methodName}" on an instance of "${_this3.bindName}".`);
+    })();
+  }
+
+  _lifeCycleMethodName(value, defaultValue) {
+    if (value === true) {
+      return defaultValue;
     }
-  }]);
-
-  return InstanceProvider;
-}();
+    return value;
+  }
+}
 
 module.exports = InstanceProvider;

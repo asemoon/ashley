@@ -1,6 +1,14 @@
 'use strict';
 
-const Scope = require('../scope');
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Scope = require('../scope');
 
 /*
  * Singleton scope makes sure that only one instance of the target object is
@@ -25,45 +33,60 @@ const Scope = require('../scope');
  * exception.
  *
  */
-class SingletonScope extends Scope {
-  constructor(provider, options) {
-    super(provider, options);
-    this._instance = null;
-    this._creating = false;
+
+var SingletonScope = function (_Scope) {
+  _inherits(SingletonScope, _Scope);
+
+  function SingletonScope(provider, options) {
+    _classCallCheck(this, SingletonScope);
+
+    var _this = _possibleConstructorReturn(this, (SingletonScope.__proto__ || Object.getPrototypeOf(SingletonScope)).call(this, provider, options));
+
+    _this._instance = null;
+    _this._creating = false;
+    return _this;
   }
 
-  async get() {
-    if (this._instance) {
-      return this._instance;
-    }
-
-    while (this._creating) {
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-
-    if (!this._instance) {
-      this._creating = true;
-
-      try {
-        const instance = await this.provider.create();
-        await this._setupInstance(instance);
-        this._instance = instance;
-      } catch (e) {
-        this._creating = false;
-        throw e;
+  _createClass(SingletonScope, [{
+    key: 'get',
+    value: async function get() {
+      if (this._instance) {
+        return this._instance;
       }
 
-      this._creating = false;
+      while (this._creating) {
+        await new Promise(function (resolve) {
+          return setTimeout(resolve, 50);
+        });
+      }
+
+      if (!this._instance) {
+        this._creating = true;
+
+        try {
+          var instance = await this.provider.create();
+          await this._setupInstance(instance);
+          this._instance = instance;
+        } catch (e) {
+          this._creating = false;
+          throw e;
+        }
+
+        this._creating = false;
+      }
+
+      return this._instance;
     }
+  }, {
+    key: 'deinitialize',
+    value: async function deinitialize() {
+      var instance = this._instance;
+      this._instance = null;
+      return this.provider.deinitializeInstance(instance);
+    }
+  }]);
 
-    return this._instance;
-  }
-
-  async deinitialize() {
-    const instance = this._instance;
-    this._instance = null;
-    return this.provider.deinitializeInstance(instance);
-  }
-}
+  return SingletonScope;
+}(Scope);
 
 module.exports = SingletonScope;

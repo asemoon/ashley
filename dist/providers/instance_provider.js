@@ -1,11 +1,19 @@
 'use strict';
 
-const _ = require('lodash');
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-const errors = require('../errors');
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-class InstanceProvider {
-  constructor(bindName, container, target, dependencies, options) {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _ = require('lodash');
+
+var errors = require('../errors');
+
+var InstanceProvider = function () {
+  function InstanceProvider(bindName, container, target, dependencies, options) {
+    _classCallCheck(this, InstanceProvider);
+
     this.bindName = bindName;
     this.container = container;
     this.target = target;
@@ -16,49 +24,59 @@ class InstanceProvider {
     });
   }
 
-  async create() {
-    const dependencies = await this.container.resolveAll(this.dependencies);
-    const instance = new this.target(...dependencies);
+  _createClass(InstanceProvider, [{
+    key: 'create',
+    value: async function create() {
+      var dependencies = await this.container.resolveAll(this.dependencies);
+      var instance = new (Function.prototype.bind.apply(this.target, [null].concat(_toConsumableArray(dependencies))))();
 
-    if (this.options.initialize) {
-      await this._initializeInstance(instance);
+      if (this.options.initialize) {
+        await this._initializeInstance(instance);
+      }
+
+      return instance;
     }
+  }, {
+    key: 'deinitializeInstance',
+    value: async function deinitializeInstance(instance) {
+      if (!instance) {
+        return;
+      }
 
-    return instance;
-  }
+      var deinitialize = this.options.deinitialize;
 
-  async deinitializeInstance(instance) {
-    if (!instance) {
-      return;
+      var methodName = this._lifeCycleMethodName(deinitialize, 'deinitialize');
+
+      if (instance[methodName]) {
+        return instance[methodName].call(instance);
+      }
+
+      throw new errors.Error('Unable to find a method called "' + methodName + '" on an instance of "' + this.bindName + '".');
     }
+  }, {
+    key: '_initializeInstance',
+    value: async function _initializeInstance(instance) {
+      var initialize = this.options.initialize;
 
-    const { deinitialize } = this.options;
-    const methodName = this._lifeCycleMethodName(deinitialize, 'deinitialize');
+      var methodName = this._lifeCycleMethodName(initialize, 'initialize');
 
-    if (instance[methodName]) {
-      return instance[methodName].call(instance);
+      if (instance[methodName]) {
+        return instance[methodName].call(instance);
+      }
+
+      throw new errors.Error('Unable to find a method called "' + methodName + '" on an instance of "' + this.bindName + '".');
     }
-
-    throw new errors.Error(`Unable to find a method called "${methodName}" on an instance of "${this.bindName}".`);
-  }
-
-  async _initializeInstance(instance) {
-    const { initialize } = this.options;
-    const methodName = this._lifeCycleMethodName(initialize, 'initialize');
-
-    if (instance[methodName]) {
-      return instance[methodName].call(instance);
+  }, {
+    key: '_lifeCycleMethodName',
+    value: function _lifeCycleMethodName(value, defaultValue) {
+      if (value === true) {
+        return defaultValue;
+      }
+      return value;
     }
+  }]);
 
-    throw new errors.Error(`Unable to find a method called "${methodName}" on an instance of "${this.bindName}".`);
-  }
-
-  _lifeCycleMethodName(value, defaultValue) {
-    if (value === true) {
-      return defaultValue;
-    }
-    return value;
-  }
-}
+  return InstanceProvider;
+}();
 
 module.exports = InstanceProvider;
